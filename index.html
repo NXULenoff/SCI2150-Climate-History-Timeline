@@ -474,8 +474,8 @@
 
       timelineData.forEach((era, eraIndex) => {
         html += `
-          <div class="era-section" data-era-index="${eraIndex}">
-            <div class="era-header" role="button" aria-expanded="true">
+          <div class="era-section collapsed" data-era-index="${eraIndex}">
+            <div class="era-header" role="button" aria-expanded="false">
               <div>
                 <h2 class="era-title">${era.era}</h2>
                 <div class="era-meta">${era.timeframe} • ${era.theme}</div>
