@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History of Climate Changes Timeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    /* Scope all styles to avoid interfering with Canvas LMS styles */
+    .climate-timeline-app {
+      --primary: #ffff00;
+      --bg: #fafafa;
+      --card-bg: #ffffff;
+      --text: #000000;
+      --border-radius: 16px;
+      --border-width: 3px;
+      
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+      line-height: 1.6;
+      box-sizing: border-box;
+    }
+
+    .climate-timeline-app * {
+      box-sizing: border-box;
+    }
+
+    /* Top Controls */
+    .timeline-controls {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 30px;
+    }
+
+    .action-btn {
+      background: var(--primary);
+      color: var(--text);
+      border: var(--border-width) solid var(--text);
+      box-shadow: 4px 4px 0px rgba(0,0,0,1);
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 16px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .action-btn:active {
+      box-shadow: 0px 0px 0px rgba(0,0,0,1);
+      transform: translate(4px, 4px);
+    }
+
+    /* Era Section */
+    .era-section {
+      margin-bottom: 40px;
+    }
+
+    .era-header {
+      background: var(--text);
+      color: var(--primary);
+      padding: 20px 24px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: var(--border-width) solid var(--text);
+      box-shadow: 6px 6px 0px rgba(0,0,0,0.15);
+      transition: transform 0.2s;
+      position: relative;
+      z-index: 2;
+    }
+
+    .era-header:hover {
+      transform: translateY(-2px);
+    }
+
+    .era-title {
+      margin: 0 0 4px 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .era-meta {
+      font-size: 0.95rem;
+      color: #f0f0f0;
+      font-weight: 400;
+    }
+
+    .era-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .era-section.collapsed .era-icon {
+      transform: rotate(-180deg);
+    }
+
+    .era-content {
+      overflow: hidden;
+      transition: max-height 0.4s ease-out, opacity 0.4s ease-out;
+      opacity: 1;
+    }
+
+    .era-section.collapsed .era-content {
+      display: none;
+      opacity: 0;
+    }
+
+    /* Timeline Spine and Events */
+    .era-events {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 40px 0;
+    }
+
+    /* The Central Line */
+    .era-events::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 4px;
+      background: var(--text);
+      transform: translateX(-50%);
+      z-index: 1;
+    }
+
+    .event-container {
+      width: 50%;
+      position: relative;
+      padding: 20px 40px;
+    }
+
+    /* Alternating Sides */
+    .event-container:nth-child(odd) {
+      align-self: flex-start;
+    }
+    .event-container:nth-child(even) {
+      align-self: flex-end;
+    }
+
+    /* The Dots */
+    .event-node {
+      position: absolute;
+      top: 40px;
+      width: 24px;
+      height: 24px;
+      background: var(--primary);
+      border: var(--border-width) solid var(--text);
+      border-radius: 50%;
+      z-index: 2;
+      transition: transform 0.2s;
+    }
+
+    .event-container:nth-child(odd) .event-node {
+      right: -12px;
+    }
+    .event-container:nth-child(even) .event-node {
+      left: -12px;
+    }
+
+    /* Event Cards */
+    .event-card {
+      background: var(--card-bg);
+      border: var(--border-width) solid var(--text);
+      border-radius: var(--border-radius);
+      padding: 24px;
+      box-shadow: 6px 6px 0px rgba(0,0,0,1);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+      position: relative;
+    }
+
+    .event-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 8px 8px 0px rgba(0,0,0,1);
+      background-color: #fdfdfd;
+    }
+    
+    .event-card:hover .event-node {
+        transform: scale(1.2);
+    }
+
+    .event-label {
+      display: inline-block;
+      background: var(--text);
+      color: var(--card-bg);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .event-title {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .event-title svg {
+        transition: transform 0.3s ease;
+    }
+    
+    .event-card.expanded .event-title svg {
+        transform: rotate(180deg);
+    }
+
+    .event-body-wrapper {
+      display: none;
+      margin-top: 16px;
+      animation: slideDown 0.3s ease-out forwards;
+    }
+
+    .event-card.expanded .event-body-wrapper {
+      display: block;
+    }
+
+    .event-body {
+      margin: 0 0 16px 0;
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .event-why {
+      background: var(--primary);
+      border: 2px solid var(--text);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .event-why strong {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 640px) {
+      .climate-timeline-app {
+        padding: 10px;
+      }
+      
+      .era-events::before {
+        left: 24px;
+        transform: none;
+      }
+
+      .event-container,
+      .event-container:nth-child(odd),
+      .event-container:nth-child(even) {
+        width: 100%;
+        align-self: center;
+        padding: 20px 10px 20px 56px;
+      }
+
+      .event-container:nth-child(odd) .event-node,
+      .event-container:nth-child(even) .event-node {
+        left: 12px;
+        right: auto;
+      }
+      
+      .era-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .era-icon {
+          align-self: flex-end;
+          margin-top: -30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="climate-timeline-app" class="climate-timeline-app">
+    <!-- Dynamic content will be injected here -->
+  </div>
+
+  <script>
+    // PART 1: The Data Structure
+    const timelineData = [
+      {
+        era: "Deep Earth History",
+        timeframe: "4.5 billion years ago → 12,000 years ago",
+        theme: "Natural climate variability on geological timescales",
+        events: [
+          {
+            label: "~4.5 Billion Years Ago",
+            title: "Earth's First Atmosphere",
+            body: "When Earth formed, its atmosphere contained almost no oxygen — instead it was dominated by methane, ammonia, and carbon dioxide. Surface temperatures were far higher than today. Over hundreds of millions of years, volcanic outgassing, asteroid impacts, and the emergence of photosynthetic life slowly transformed the atmosphere into what we recognise today.",
+            whyItMatters: "Establishes that Earth's climate is not static — it has always been shaped by the composition of the atmosphere, a principle that underlies all modern climate science."
+          },
+          {
+            label: "~700 Million Years Ago",
+            title: "Snowball Earth",
+            body: "Scientists believe Earth experienced at least two episodes in which ice sheets extended to the equator — a state known as \"Snowball Earth.\" Temperatures may have dropped to –50°C globally. These events were eventually reversed by volcanic CO₂ accumulating over millions of years until the greenhouse effect melted the ice.",
+            whyItMatters: "The most dramatic example of natural climate feedback loops — demonstrates that CO₂ concentration is the dominant lever of Earth's temperature over geological time."
+          },
+          {
+            label: "~300 Million Years Ago",
+            title: "The Carboniferous Period",
+            body: "Vast tropical forests covered the supercontinent. As trees died and were buried — before bacteria evolved to decompose them — their carbon was locked underground. This burial of organic carbon pulled CO₂ out of the atmosphere, triggering global cooling and glaciation. The buried forests became the coal deposits that the Industrial Revolution would later burn.",
+            whyItMatters: "The origin story of fossil fuels. The carbon humans are releasing today was captured by these forests over 60 million years. We are unburying it in centuries."
+          },
+          {
+            label: "~55 Million Years Ago",
+            title: "The Palaeocene–Eocene Thermal Maximum (PETM)",
+            body: "A massive, rapid release of carbon into the atmosphere — likely from volcanic activity or seafloor methane — raised global temperatures by 5–8°C in less than 20,000 years. Oceans acidified, deep-sea species went extinct, and ecosystems reorganised globally. The PETM lasted around 200,000 years before carbon was slowly reabsorbed.",
+            whyItMatters: "The closest natural analogue to what humans are doing today — but the rate of CO₂ release was up to 10 times slower than current human emissions."
+          },
+          {
+            label: "2.6 Million → 12,000 Years Ago",
+            title: "The Ice Ages (Pleistocene Glacial Cycles)",
+            body: "Over the past 2.6 million years, Earth cycled through roughly 50 glacial and interglacial periods, each lasting tens of thousands of years. At the last glacial maximum (~20,000 years ago), ice sheets 3 km thick covered most of North America and northern Europe. Sea levels were 120 metres lower than today. These cycles were driven by small, predictable changes in Earth's orbit — the Milankovitch cycles — amplified by CO₂ and methane feedbacks.",
+            whyItMatters: "Establishes the baseline of natural variability against which current warming must be measured. Ice core data from these cycles is one of the strongest lines of evidence linking CO₂ concentration to temperature."
+          }
+        ]
+      },
+      {
+        era: "Human Civilisation & Early Warming",
+        timeframe: "12,000 years ago → 1900",
+        theme: "Climate stability enables civilisation — then industrialisation disrupts it",
+        events: [
+          {
+            label: "~12,000 Years Ago",
+            title: "The Holocene",
+            body: "The end of the last ice age ushered in the Holocene — an unusually stable warm period that has lasted ~12,000 years. Global temperatures stayed within a ~1°C range for millennia. This stability was not a coincidence: agriculture, settled civilisation, writing, cities, and global trade all emerged and flourished within this narrow climate envelope. No previous human civilisation has existed outside the Holocene's conditions.",
+            whyItMatters: "The Holocene is the only climate humans have ever built a civilisation in. Exceeding its temperature range is not an abstract scientific concern — it is a direct threat to the conditions that make complex human society possible."
+          },
+          {
+            label: "~1300–1850",
+            title: "The Little Ice Age",
+            body: "A period of regional cooling — most pronounced in Europe and North America — caused by a combination of reduced solar activity, increased volcanic eruptions, and natural ocean circulation shifts. Average temperatures in Europe fell by ~1°C. Harvests failed, rivers froze, and mountain glaciers advanced. The Thames froze over repeatedly; frost fairs were held on the ice.",
+            whyItMatters: "Shows the real-world consequences of even small temperature shifts — and illustrates how natural forcings have been ruled out as explanations for current warming."
+          },
+          {
+            label: "~1750 — Ongoing",
+            title: "The Industrial Revolution",
+            body: "The burning of coal to power steam engines initiated a sustained, exponential increase in atmospheric CO₂. By 1850, CO₂ concentrations had risen slightly above the Holocene baseline of ~280 ppm. The global economy's dependency on fossil fuels — coal first, then oil and natural gas — was established in this period and deepened throughout the 19th century.",
+            whyItMatters: "The starting point of human-caused climate change. Every subsequent data point on CO₂ concentration, temperature, and sea level traces back to the decision to power growth with buried carbon."
+          }
+        ]
+      },
+      {
+        era: "The Science Emerges",
+        timeframe: "1824 → 1990",
+        theme: "Scientists identify and confirm the mechanism of human-caused warming",
+        events: [
+          {
+            label: "1824",
+            title: "Fourier Describes the Greenhouse Effect",
+            body: "French mathematician Joseph Fourier calculated that Earth should be much colder than it is given its distance from the sun. He proposed that the atmosphere acts like a blanket, trapping heat — the first description of what we now call the greenhouse effect.",
+            whyItMatters: "The foundational insight. Climate science began not with computers or satellites, but with mathematics and a question: why is Earth warm enough for life?"
+          },
+          {
+            label: "1859",
+            title: "Tyndall Identifies Greenhouse Gases",
+            body: "Irish physicist John Tyndall experimentally demonstrated that CO₂, water vapour, and methane absorb infrared radiation while oxygen and nitrogen do not. He concluded that changes in atmospheric CO₂ concentration could cause significant changes in Earth's surface temperature.",
+            whyItMatters: "The first experimental proof of the greenhouse mechanism — identified 160 years before climate change became a global policy issue."
+          },
+          {
+            label: "1896",
+            title: "Arrhenius Calculates Warming",
+            body: "Swedish chemist Svante Arrhenius spent a year performing manual calculations to estimate how much global temperatures would rise if atmospheric CO₂ doubled. His answer: approximately 5–6°C — remarkably close to modern estimates of climate sensitivity.",
+            whyItMatters: "The first quantitative climate projection — produced in 1896 with no computers. Modern supercomputer models largely confirm his estimate."
+          },
+          {
+            label: "1958",
+            title: "The Keeling Curve Begins",
+            body: "American scientist Charles David Keeling began continuous, precise measurements of atmospheric CO₂ at the Mauna Loa Observatory in Hawaii. He found CO₂ at 315 ppm — and rising. His measurements constitute the longest continuous record of atmospheric CO₂ and have become one of the most iconic datasets in science.",
+            whyItMatters: "Transformed climate change from a theoretical projection into an empirical, measured reality observed in real time."
+          },
+          {
+            label: "1988",
+            title: "Hansen Testifies to the US Senate",
+            body: "NASA climate scientist James Hansen told the US Senate: \"Global warming has reached a level such that we can ascribe with a high degree of confidence a cause-and-effect relationship between the greenhouse effect and observed warming.\" The testimony made front pages worldwide.",
+            whyItMatters: "The moment climate change entered mainstream political consciousness and the opening of the modern climate policy era."
+          },
+          {
+            label: "1988",
+            title: "The IPCC is Established",
+            body: "The Intergovernmental Panel on Climate Change was established by the UN to provide policymakers with regular scientific assessments of climate change. The IPCC synthesises and assesses existing scientific literature, with reports reviewed by thousands of scientists worldwide.",
+            whyItMatters: "Created the international scientific authority that all subsequent climate policy — from Kyoto to Paris — depends on."
+          }
+        ]
+      },
+      {
+        era: "The Policy Response",
+        timeframe: "1990 → Present",
+        theme: "The world recognises the problem and begins — slowly — to respond",
+        events: [
+          {
+            label: "1990",
+            title: "First IPCC Assessment Report",
+            body: "The IPCC's first report concluded that human activities were substantially increasing atmospheric concentrations of greenhouse gases and that significant warming was expected. It directly led to the creation of the UNFCCC.",
+            whyItMatters: "The scientific consensus was formally established and communicated to governments for the first time. Everything in climate policy since traces back to this document."
+          },
+          {
+            label: "1992",
+            title: "Rio Earth Summit & the UNFCCC",
+            body: "154 nations signed the United Nations Framework Convention on Climate Change — the first binding international treaty acknowledging climate change as a shared global problem. It established the principle of common but differentiated responsibilities.",
+            whyItMatters: "Created the international legal architecture for all subsequent climate agreements including Kyoto and Paris."
+          },
+          {
+            label: "1997",
+            title: "The Kyoto Protocol",
+            body: "The first binding international agreement requiring developed countries to reduce greenhouse gas emissions by an average of 5% below 1990 levels. The US signed but never ratified; developing nations including China and India were not bound. Global emissions continued rising despite Kyoto-country reductions.",
+            whyItMatters: "Proved both that international climate cooperation was possible and that it was insufficient — setting the stage for Paris."
+          },
+          {
+            label: "2015",
+            title: "The Paris Agreement",
+            body: "196 parties signed the Paris Agreement, committing to limit global warming to well below 2°C and to pursue efforts to limit to 1.5°C. Unlike Kyoto, Paris was universal — all countries submitted nationally determined contributions. It represented the most significant shift in global climate governance architecture since the UNFCCC.",
+            whyItMatters: "The current framework governing global climate action. All national climate policies and corporate net-zero targets operate within or refer to the Paris Agreement."
+          },
+          {
+            label: "2018",
+            title: "IPCC Special Report on 1.5°C",
+            body: "The IPCC found that limiting warming to 1.5°C rather than 2°C would significantly reduce risks of extreme heat, sea level rise, and coral reef loss. It concluded global CO₂ emissions must fall ~45% by 2030 and reach net zero by ~2050. At the current trajectory, 1.5°C could be breached as early as 2034.",
+            whyItMatters: "Provided the scientific basis for the net zero by 2050 target now adopted by over 140 countries."
+          },
+          {
+            label: "2023–2024",
+            title: "Hottest Years on Record",
+            body: "2023 was the hottest year in recorded history; 2024 broke that record. For the first time, annual average global temperature exceeded 1.5°C above pre-industrial levels for a full calendar year. CO₂ concentrations reached 424 ppm — higher than at any point in at least 3 million years of Earth history.",
+            whyItMatters: "Climate change is no longer a future risk — it is a present reality. The decisions made in the next decade will determine whether 1.5°C is a brief exceedance or a new baseline."
+          }
+        ]
+      }
+    ];
+
+    // PART 2: Rendering and Interaction Logic
+    document.addEventListener("DOMContentLoaded", () => {
+      const appContainer = document.getElementById('climate-timeline-app');
+      let allExpanded = false;
+
+      // SVG Icons
+      const chevronUp = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+      const caretDown = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
+      // Generate HTML Structure
+      let html = `
+        <div class="timeline-controls">
+          <button id="toggle-all-btn" class="action-btn">Expand All Events</button>
+        </div>
+      `;
+
+      timelineData.forEach((era, eraIndex) => {
+        html += `
+          <div class="era-section" data-era-index="${eraIndex}">
+            <div class="era-header" role="button" aria-expanded="true">
+              <div>
+                <h2 class="era-title">${era.era}</h2>
+                <div class="era-meta">${era.timeframe} • ${era.theme}</div>
+              </div>
+              <div class="era-icon">${chevronUp}</div>
+            </div>
+            <div class="era-content">
+              <div class="era-events">
+        `;
+
+        era.events.forEach((event, eventIndex) => {
+          html += `
+                <div class="event-container">
+                  <div class="event-node"></div>
+                  <div class="event-card" role="button" aria-expanded="false" data-event-id="e_${eraIndex}_${eventIndex}">
+                    <span class="event-label">${event.label}</span>
+                    <h3 class="event-title">
+                      ${event.title}
+                      <span class="event-icon">${caretDown}</span>
+                    </h3>
+                    <div class="event-body-wrapper">
+                      <p class="event-body">${event.body}</p>
+                      <div class="event-why">
+                        <strong>Why It Matters</strong>
+                        ${event.whyItMatters}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+          `;
+        });
+
+        html += `
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Inject HTML
+      appContainer.innerHTML = html;
+
+      // Event Delegation for Interactions (Safe for LMS sanitizers)
+      appContainer.addEventListener('click', (e) => {
+        
+        // 1. Toggle Era
+        const eraHeader = e.target.closest('.era-header');
+        if (eraHeader) {
+          const eraSection = eraHeader.closest('.era-section');
+          eraSection.classList.toggle('collapsed');
+          const isCollapsed = eraSection.classList.contains('collapsed');
+          eraHeader.setAttribute('aria-expanded', !isCollapsed);
+          return;
+        }
+
+        // 2. Toggle Individual Event
+        const eventCard = e.target.closest('.event-card');
+        if (eventCard) {
+          eventCard.classList.toggle('expanded');
+          const isExpanded = eventCard.classList.contains('expanded');
+          eventCard.setAttribute('aria-expanded', isExpanded);
+          return;
+        }
+
+        // 3. Toggle All Events Button
+        const toggleBtn = e.target.closest('#toggle-all-btn');
+        if (toggleBtn) {
+          allExpanded = !allExpanded;
+          toggleBtn.innerText = allExpanded ? "Collapse All Events" : "Expand All Events";
+          
+          // Expand/Collapse all event cards
+          const allCards = appContainer.querySelectorAll('.event-card');
+          allCards.forEach(card => {
+            if (allExpanded) {
+              card.classList.add('expanded');
+              card.setAttribute('aria-expanded', 'true');
+            } else {
+              card.classList.remove('expanded');
+              card.setAttribute('aria-expanded', 'false');
+            }
+          });
+
+          // Ensure all Eras are open when expanding all
+          if (allExpanded) {
+            const allEras = appContainer.querySelectorAll('.era-section');
+            allEras.forEach(era => {
+              era.classList.remove('collapsed');
+              era.querySelector('.era-header').setAttribute('aria-expanded', 'true');
+            });
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
